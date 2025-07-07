@@ -67,9 +67,7 @@ cmd(
 -----බොට් ගේ Main menu list එක පහතින් දැක්වේ 👇----
 
 *|🔥MAIN COMMANDS🔥|*
-    ▫️.alive
     ▫️.menu
-    ▫️.system
     ▫️.ping
     ▫️.owner
 *|🔃DOWNLOAD COMMANDS🔃|*
@@ -77,7 +75,11 @@ cmd(
     ▫️.video <text>
     ▫️.fb <link>
     ▫️.tt <link>
-    ▫️.ig <link>
+    ▫️.insta <link>
+    ▫️.gdrivedl <link>
+    ▫️.gdrivesimple <link>
+    ▫️.gdrive2 <link>
+    ▫️.gdrivebig <link>
     ▫️.movie <text>
     ▫️.film <text>
 *|🔗INFO COMMANDS🔗|*
@@ -114,6 +116,7 @@ cmd(
     ▫️.lc
     ▫️.news
     ▫️.lankanews
+    ▫️.gdrive <link>
     ▫️.ai <text>
     ▫️.chatgpt <text>
     ▫️.gemini <text>
