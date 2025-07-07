@@ -18,7 +18,7 @@ module.exports = async function (robin, groupId, newMembers) {
 
     for (const member of newMembers) {
       // Custom welcome message
-      const caption = `██▓▒­░ ►▬ WELCOME ▬◄ ░▒▓██\n *${groupName}!*\n@${member.split("@")[0]} 👻, we are glad to have you here!\n\n*Please be sure to follow the rules of the group you are in!*\n------------------------------------\n> Also, a 🤖bot has been installed for group administration, so please refrain from sharing obscene material or sharing other group links😾🖐\n\n> *🌀ONYX MD🔥BOT👾BY AROSH*`;
+      const caption = `👋😍 *WELCOME TO ${groupName}!*\n@${member.split("@")[0]} 👻, we are glad to have you here!\n\n*Please be sure to follow the rules of the group you are in!*\n------------------------------------\n> Also, a 🤖bot has been installed for group administration, so please refrain from sharing obscene material or sharing other group links😾🖐\n\n> *🌀ONYX MD🔥BOT👾BY AROSH*`;
 
       // Send image with caption
       await robin.sendMessage(groupId, {
