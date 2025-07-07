@@ -56,6 +56,7 @@ async (robin, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, se
 
     let fileBuffer = null;
     let downloadSuccess = false;
+    let finalContentType = null;
 
     // Try multiple download methods with retry logic
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -87,6 +88,30 @@ async (robin, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, se
                 return status >= 200 && status < 400;
               }
             });
+
+            // Extract file name from Content-Disposition header if available
+            if (response.headers && response.headers['content-disposition']) {
+              const contentDisposition = response.headers['content-disposition'];
+              const match = contentDisposition.match(/filename\*=UTF-8''([^;\n\r]*)/);
+              if (match && match[1]) {
+                fileName = decodeURIComponent(match[1]);
+              } else {
+                // Try fallback for plain filename="..."
+                const match2 = contentDisposition.match(/filename="([^"]+)"/);
+                if (match2 && match2[1]) {
+                  fileName = match2[1];
+                }
+              }
+            }
+
+            // Guess extension from content-type if fileName is 'view' or missing extension
+            if (response.headers && response.headers['content-type']) {
+              finalContentType = response.headers['content-type'];
+              if ((fileName === 'view' || !fileName.includes('.')) && finalContentType) {
+                const ext = guessExtension(finalContentType);
+                if (ext && !fileName.endsWith(ext)) fileName += ext;
+              }
+            }
 
             if (response.data && response.data.length > 0) {
               fileBuffer = Buffer.from(response.data);
@@ -182,3 +207,25 @@ async (robin, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, se
     }, { quoted: mek });
   }
 }); 
+
+// After extracting fileName and before sending the file
+// Guess extension from content-type if fileName is 'view' or missing extension
+function guessExtension(contentType) {
+  if (!contentType) return '';
+  if (contentType.includes('pdf')) return '.pdf';
+  if (contentType.includes('msword')) return '.doc';
+  if (contentType.includes('vnd.openxmlformats-officedocument.wordprocessingml.document')) return '.docx';
+  if (contentType.includes('vnd.ms-excel')) return '.xls';
+  if (contentType.includes('vnd.openxmlformats-officedocument.spreadsheetml.sheet')) return '.xlsx';
+  if (contentType.includes('vnd.ms-powerpoint')) return '.ppt';
+  if (contentType.includes('vnd.openxmlformats-officedocument.presentationml.presentation')) return '.pptx';
+  if (contentType.includes('zip')) return '.zip';
+  if (contentType.includes('rar')) return '.rar';
+  if (contentType.includes('image/jpeg')) return '.jpg';
+  if (contentType.includes('image/png')) return '.png';
+  if (contentType.includes('image/gif')) return '.gif';
+  if (contentType.includes('mp4')) return '.mp4';
+  if (contentType.includes('mp3')) return '.mp3';
+  if (contentType.includes('text/plain')) return '.txt';
+  return '';
+} 
