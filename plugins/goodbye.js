@@ -18,7 +18,7 @@ module.exports = async function (robin, groupId, leftMembers) {
 
     for (const member of leftMembers) {
       // Custom goodbye message
-      const caption = `👋😾 *GOODBYE from ${groupName}!*\n@${member.split("@")[0]} 😒,*we are sad to see you go!*\n------------------------------------\n> *He or she must have been removed by the admin for violating the group rules or he or she must have left the group voluntarily 💀‼*\n\n> *🌀ONYX MD🔥BOT👾BY AROSH*`;
+      const caption = `👋😾 *GOODBYE from ${groupName}!*\n@${member.split("@")[0]} 😒,\n──▄────▄▄▄▄▄▄▄────▄───\n─▀▀▄─▄█████████▄─▄▀▀──\n─────██─▀███▀─██──────\n───▄─▀████▀████▀─▄────\n─▀█────██▀█▀██────█▀──\n\n*we are sad to see you go!*\n------------------------------------\n> *He or she must have been removed by the admin for violating the group rules or he or she must have left the group voluntarily 💀‼*\n\n> *🌀ONYX MD🔥BOT👾BY AROSH*`;
 
       // Send image with caption
       await robin.sendMessage(groupId, {
