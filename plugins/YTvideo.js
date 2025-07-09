@@ -2,6 +2,44 @@ const { cmd, commands } = require("../command");
 const yts = require("yt-search");
 const { ytmp4 } = require("@vreden/youtube_scraper");
 
+const normalizeYouTubeUrl = (inputUrl) => {
+  try {
+    let videoId = null;
+
+    if (!inputUrl.startsWith("http")) {
+      inputUrl = "https://" + inputUrl;
+    }
+
+    const urlObj = new URL(inputUrl);
+    const hostname = urlObj.hostname.replace("www.", "");
+
+    if (hostname === "youtu.be") {
+      videoId = urlObj.pathname.slice(1);
+    } else if (hostname === "youtube.com" || hostname === "m.youtube.com") {
+      if (urlObj.pathname === "/watch") {
+        videoId = urlObj.searchParams.get("v");
+      } else if (urlObj.pathname.startsWith("/embed/")) {
+        videoId = urlObj.pathname.split("/embed/")[1];
+      } else if (urlObj.pathname.startsWith("/shorts/")) {
+        videoId = urlObj.pathname.split("/shorts/")[1];
+      }
+    }
+
+    if (videoId && /^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+      return `https://www.youtube.com/watch?v=${videoId}`;
+    }
+
+    const match = inputUrl.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);
+    if (match && match[1]) {
+      return `https://www.youtube.com/watch?v=${match[1]}`;
+    }
+
+    return inputUrl;
+  } catch {
+    return inputUrl;
+  }
+};
+
 cmd(
   {
     pattern: "video",
@@ -49,7 +87,10 @@ cmd(
       }
       
       const data = search.videos[0];
-      const url = data.url;
+      if (!data || !data.url) {
+        return reply("❌ Invalid video data received. Please try again.");
+      }
+      const url = normalizeYouTubeUrl(data.url);
 
       // Video metadata description
       let desc = `
