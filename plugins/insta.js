@@ -5,7 +5,7 @@ const axios = require("axios");
 cmd(
   {
     pattern: "insta",
-    alias: ["instagram", "igreel", "ig"],
+    alias: ["instagram", "ig"],
     react: "📸",
     desc: "Download Instagram Video or Reel",
     category: "download",
