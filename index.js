@@ -56,6 +56,8 @@ const port = process.env.PORT || 8000;
 
 //=============================================
 
+const messageStore = {};
+
 async function connectToWA() {
   let retryCount = 0;
   const maxRetries = 5;
@@ -107,6 +109,9 @@ async function connectToWA() {
           require("./plugins/" + plugin);
         }
       });
+      // Initialize anti-delete plugin
+      const setupAntiDelete = require("./plugins/anti-delete.js");
+      setupAntiDelete(robin);
       console.log("🌀ONYX MD🔥BOT👾 installed successful ✅");
       console.log("🌀ONYX MD🔥BOT👾 connected to whatsapp ✅");
 
@@ -131,6 +136,8 @@ async function connectToWA() {
   robin.ev.on("messages.upsert", async (mek) => {
     mek = mek.messages[0];
     if (!mek.message) return;
+    // Store the message by its key for anti-delete
+    messageStore[mek.key.id] = mek;
     mek.message =
       getContentType(mek.message) === "ephemeralMessage"
         ? mek.message.ephemeralMessage.message
@@ -188,7 +195,22 @@ if (
     const groupName = isGroup ? groupMetadata.subject : "";
     const participants = isGroup ? await groupMetadata.participants : "";
     const groupAdmins = isGroup ? await getGroupAdmins(participants) : "";
-    const isBotAdmins = isGroup ? groupAdmins.includes(botNumber2) : false;
+    const botJidLid = botNumber + '@lid';
+    const isBotAdmins = isGroup ? (groupAdmins.includes(botNumber2) || groupAdmins.includes(botJidLid)) : false;
+    if (isGroup) {
+      console.log('[DEBUG] Bot JID:', botNumber2);
+      console.log('[DEBUG] Bot JID (lid):', botJidLid);
+      console.log('[DEBUG] Group Admins:', groupAdmins);
+      console.log('[DEBUG] isBotAdmins:', isBotAdmins);
+      if (participants && Array.isArray(participants)) {
+        console.log('[DEBUG] Group Participants:');
+        participants.forEach(p => {
+          const jid = p.id || p.jid || p;
+          const isBot = jid === botNumber2 || jid === botJidLid;
+          console.log(`  - ${jid}${isBot ? '  <== BOT' : ''}`);
+        });
+      }
+    }
     const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
     const isReact = m.message.reactionMessage ? true : false;
     const reply = (teks) => {
@@ -303,9 +325,40 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
     robin.sendFileUrl = async (jid, url, caption, quoted, options = {}) => {
       try {
         let mime = "";
-        let res = await axios.head(url, { timeout: 30000 }); // 30 second timeout
+        let res = await axios.head(url, { 
+          timeout: 45000, // Increased timeout for cloud environments
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          },
+          validateStatus: function (status) {
+            return status >= 200 && status < 400; // Accept redirects
+          }
+        }); 
         mime = res.headers["content-type"];
-      if (mime.split("/")[1] === "gif") {
+        
+        // Handle specific error cases
+        if (res.status === 503) {
+          throw new Error("Service temporarily unavailable (503)");
+        }
+        
+        // Enhanced MIME type detection
+        if (!mime) {
+          // Try to detect MIME type from URL extension
+          const urlLower = url.toLowerCase();
+          if (urlLower.includes('.mp4') || urlLower.includes('.avi') || urlLower.includes('.mov')) {
+            mime = 'video/mp4';
+          } else if (urlLower.includes('.mp3') || urlLower.includes('.wav') || urlLower.includes('.m4a')) {
+            mime = 'audio/mpeg';
+          } else if (urlLower.includes('.jpg') || urlLower.includes('.jpeg') || urlLower.includes('.png')) {
+            mime = 'image/jpeg';
+          } else if (urlLower.includes('.gif')) {
+            mime = 'image/gif';
+          } else if (urlLower.includes('.pdf')) {
+            mime = 'application/pdf';
+          }
+        }
+        
+      if (mime && mime.split("/")[1] === "gif") {
         return robin.sendMessage(
           jid,
           {
@@ -330,14 +383,14 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
           { quoted: quoted, ...options }
         );
       }
-      if (mime.split("/")[0] === "image") {
+      if (mime && mime.split("/")[0] === "image") {
         return robin.sendMessage(
           jid,
           { image: await getBuffer(url), caption: caption, ...options },
           { quoted: quoted, ...options }
         );
       }
-      if (mime.split("/")[0] === "video") {
+      if (mime && mime.split("/")[0] === "video") {
         return robin.sendMessage(
           jid,
           {
@@ -349,7 +402,7 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
           { quoted: quoted, ...options }
         );
       }
-      if (mime.split("/")[0] === "audio") {
+      if (mime && mime.split("/")[0] === "audio") {
         return robin.sendMessage(
           jid,
           {
@@ -361,12 +414,43 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
           { quoted: quoted, ...options }
         );
       }
+      
+      // Fallback: try to send as document if MIME type is unknown
+      return robin.sendMessage(
+        jid,
+        {
+          document: await getBuffer(url),
+          mimetype: "application/octet-stream",
+          caption: caption,
+          ...options,
+        },
+        { quoted: quoted, ...options }
+      );
+      
     } catch (error) {
       console.error("sendFileUrl error:", error);
-      // Send error message to user
-      robin.sendMessage(jid, { 
-        text: "❌ Failed to send file. Please try again later." 
-      }, { quoted: quoted });
+      
+      // Provide more specific error handling
+      if (error.response && error.response.status === 503) {
+        throw error; // Re-throw 503 errors to be handled by the calling function
+      } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+        robin.sendMessage(jid, { 
+          text: "❌ Network error: Unable to connect to the file server. Please check your internet connection." 
+        }, { quoted: quoted });
+      } else if (error.code === 'ETIMEDOUT') {
+        robin.sendMessage(jid, { 
+          text: "❌ Timeout: The request took too long. Please try again." 
+        }, { quoted: quoted });
+      } else if (error.message && error.message.includes('503')) {
+        robin.sendMessage(jid, { 
+          text: "❌ Service temporarily unavailable. Please try again later." 
+        }, { quoted: quoted });
+      } else {
+        // Send generic error message to user
+        robin.sendMessage(jid, { 
+          text: "❌ Failed to send file. Please try again later." 
+        }, { quoted: quoted });
+      }
     }
   };
     // Owner react system - Integrated into index.js for better performance
@@ -618,3 +702,5 @@ app.listen(port, () =>
 setTimeout(() => {
   connectToWA();
 }, 4000);
+
+module.exports = { sms, downloadMediaMessage, messageStore };
