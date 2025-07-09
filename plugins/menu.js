@@ -82,6 +82,7 @@ cmd(
     ▫️.gdrivebig <link>
     ▫️.movie <text>
     ▫️.film <text>
+    ▫️.apk <text>
 *|🔗INFO COMMANDS🔗|*
     ▫️.links
     ▫️.alive
