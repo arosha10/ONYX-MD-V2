@@ -6,7 +6,9 @@
   "scripts": {
     "start": "pm2 start index.js --deep-monitoring --attach --name 'ONYX-MD-BOT'",
     "stop": "pm2 stop 'ONYX-MD-BOT'",
-    "restart": "pm2 restart 'ONYX-MD-BOT'"
+    "restart": "pm2 restart 'ONYX-MD-BOT'",
+    "start-with-restart": "node restart-script.js",
+    "auto-restart": "pm2 start restart-script.js --name 'ONYX-RESTART-MANAGER'"
   },
   "dependencies": {
     "@bochilteam/scraper-sosmed": "^1.0.5",
