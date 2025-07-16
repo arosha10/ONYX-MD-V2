@@ -59,10 +59,14 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    # Run every 6 hours and 15 minutes (6.25 hours = 22500 seconds)
+    # Cron format: minute hour day month day-of-week
+    # This runs at 00:00, 06:15, 12:30, 18:45 UTC every day
+    - cron: '0,15,30,45 0,6,12,18 * * *'
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -83,6 +87,34 @@ jobs:
 
     - name: Start application
       run: npm start
+
+  restart:
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Restart application
+      run: |
+        echo "🔄 Restarting application..."
+        npm restart || npm start
+        echo "✅ Application restarted successfully"
+
+    - name: Wait for restart
+      run: |
+        echo "⏳ Waiting for application to fully restart..."
+        sleep 30
+        echo "✅ Restart process completed" 
 
 ```
 
