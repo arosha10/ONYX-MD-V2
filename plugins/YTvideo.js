@@ -1,6 +1,7 @@
 const { cmd, commands } = require("../command");
 const yts = require("yt-search");
 const { ytmp4 } = require("@vreden/youtube_scraper");
+const { sendDownloadProgress, updateDownloadProgress, simulateDownloadProgress } = require("../lib/functions");
 
 const normalizeYouTubeUrl = (inputUrl) => {
   try {
@@ -113,14 +114,48 @@ cmd(
         { quoted: mek }
       );
 
-      // Download the video using @vreden/youtube_scraper
-      const quality = "128"; // Default quality
-      const videoData = await ytmp4(url, quality);
+      // Send initial downloading message
+      const progressMsg = await sendDownloadProgress(
+        robin,
+        from,
+        mek,
+        "🔄 *Downloading video...*\n\n*10%* █"
+      );
 
-      // Validate videoData structure
-      if (!videoData || !videoData.download || !videoData.download.url) {
-        console.error("Invalid videoData structure:", videoData);
-        return reply("❌ Failed to get download URL. The video might be restricted or unavailable.");
+      // Download the video using only shamika-api
+      let videoData;
+      try {
+        const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+        const apiUrl = `https://shamika-api.vercel.app/download/ytmp4/?url=${encodeURIComponent(url)}`;
+        
+        // Start simulated progress from 10% to 90%
+        const progressPromise = simulateDownloadProgress(robin, progressMsg, 10, 90, 10, "video");
+        
+        const apiRes = await fetch(apiUrl);
+        const apiJson = await apiRes.json();
+        
+        if (
+          apiJson.status &&
+          apiJson.result &&
+          apiJson.result.download &&
+          apiJson.result.download.url
+        ) {
+          videoData = { download: { url: apiJson.result.download.url } };
+          console.log("✅ shamika-api successful");
+          
+          // Wait for progress simulation to complete
+          await progressPromise;
+        } else {
+          console.error("shamika-api full response:", apiJson);
+          throw new Error(
+            typeof apiJson.result === 'object'
+              ? JSON.stringify(apiJson.result)
+              : (apiJson.result || 'shamika-api failed')
+          );
+        }
+      } catch (downloadError) {
+        console.error("shamika-api error:", downloadError);
+        return reply("❌ Failed to download the video. The video might be restricted or unavailable.");
       }
 
       // Validate video duration (limit: 30 minutes)
@@ -133,6 +168,13 @@ cmd(
       if (totalSeconds > 1800) {
         return reply("⏱️ video limit is 30 minitues");
       }
+
+      // Update progress to 100% and send completion message
+      await updateDownloadProgress(
+        robin,
+        progressMsg,
+        "✅ *Download completed!*\n\n*100%* ██████████ ✅\n\n📤 *Sending video...*"
+      );
 
       // Send video file
       try {

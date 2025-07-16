@@ -90,7 +90,8 @@ cmd(
     ▫️.ping
 *|👥GROUP COMMANDS👥|*
     ▫️kick
-    ▫️groupinfo
+    ▫️remove
+    ▫️leave
     ▫️mute
     ▫️unmute
     ▫️add
@@ -105,6 +106,7 @@ cmd(
     ▫️.antispam
     ▫️.broadcast
     ▫️.clearchat
+    ▫️.left
 *|🔄CONVERT COMMANDS🔄|*
     ▫️.sticker <reply img>
     ▫️.toimg <reply sticker>

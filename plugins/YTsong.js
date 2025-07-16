@@ -1,6 +1,7 @@
 const { cmd, commands } = require("../command");
 const yts = require("yt-search");
 const { ytmp3 } = require("@vreden/youtube_scraper");
+const { sendDownloadProgress, updateDownloadProgress, simulateDownloadProgress } = require("../lib/functions");
 
 
 const normalizeYouTubeUrl = (inputUrl) => {
@@ -125,19 +126,47 @@ cmd(
         // Continue without thumbnail if it fails
       }
 
-      // Download MP3 audio with enhanced error handling
+      // Send initial downloading message
+      const progressMsg = await sendDownloadProgress(
+        robin,
+        from,
+        mek,
+        "🔄 *Downloading song...*\n\n*10%* █"
+      );
+
+      // Download MP3 audio using only shamika-api
       let songData;
       try {
-        const quality = "128";
-        songData = await ytmp3(url, quality);
+        const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+        const apiUrl = `https://shamika-api.vercel.app/download/ytmp3/?url=${encodeURIComponent(url)}`;
         
-        if (!songData || !songData.download || !songData.download.url) {
-          throw new Error("Invalid song data received from YouTube scraper");
+        // Start simulated progress from 10% to 90%
+        const progressPromise = simulateDownloadProgress(robin, progressMsg, 10, 90, 10, "song");
+        
+        const apiRes = await fetch(apiUrl);
+        const apiJson = await apiRes.json();
+        
+        if (
+          apiJson.status &&
+          apiJson.result &&
+          apiJson.result.download &&
+          apiJson.result.download.url
+        ) {
+          songData = { download: { url: apiJson.result.download.url } };
+          console.log("✅ shamika-api successful");
+          
+          // Wait for progress simulation to complete
+          await progressPromise;
+        } else {
+          console.error("shamika-api full response:", apiJson);
+          throw new Error(
+            typeof apiJson.result === 'object'
+              ? JSON.stringify(apiJson.result)
+              : (apiJson.result || 'shamika-api failed')
+          );
         }
-        
-        console.log("✅ YouTube song data extracted successfully");
       } catch (downloadError) {
-        console.error("YouTube download error:", downloadError);
+        console.error("shamika-api error:", downloadError);
         return reply("❌ Failed to download the song. The video might be restricted or unavailable.");
       }
 
@@ -161,6 +190,13 @@ cmd(
         console.error("Duration parsing error:", durationError);
         // Continue without duration check if parsing fails
       }
+
+      // Update progress to 100% and send completion message
+      await updateDownloadProgress(
+        robin,
+        progressMsg,
+        "✅ *Download completed!*\n\n*100%* ██████████ ✅\n\n📤 *Sending song...*"
+      );
 
       // Send audio as voice message with fallback
       try {

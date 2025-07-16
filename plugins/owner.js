@@ -164,8 +164,13 @@ cmd({
       console.log(`- ${p.id} | admin: ${p.admin}`);
     });
     const allParticipants = metadata.participants || [];
-    const participant = allParticipants.find(p => p.id === sender);
-    const isAdmin = participant?.admin === 'admin' || participant?.admin === 'superadmin';
+    // Improved admin detection
+    const participant = allParticipants.find(
+      p => p.id.split('@')[0] === sender.split('@')[0]
+    );
+    console.log('[DEBUG] Sender:', sender);
+    console.log('[DEBUG] Matched participant:', participant);
+    const isAdmin = participant && (participant.admin === 'admin' || participant.admin === 'superadmin');
     const { botJid, botLid } = getBotJids(robin, userSetting);
     const botParticipant = allParticipants.find(p => p.id === botJid || p.id === botLid);
     console.log('[DEBUG] Bot JID:', botJid, '| Bot LID:', botLid);
@@ -256,8 +261,13 @@ cmd({
       console.log(`- ${p.id} | admin: ${p.admin}`);
     });
     const allParticipants = metadata.participants || [];
-    const participant = allParticipants.find(p => p.id === sender);
-    const isAdmin = participant?.admin === 'admin' || participant?.admin === 'superadmin';
+    // Improved admin detection
+    const participant = allParticipants.find(
+      p => p.id.split('@')[0] === sender.split('@')[0]
+    );
+    console.log('[DEBUG] Sender:', sender);
+    console.log('[DEBUG] Matched participant:', participant);
+    const isAdmin = participant && (participant.admin === 'admin' || participant.admin === 'superadmin');
     const { botJid, botLid } = getBotJids(robin, userSetting);
     const botParticipant = allParticipants.find(p => p.id === botJid || p.id === botLid);
    
@@ -303,8 +313,13 @@ cmd({
       console.log(`- ${p.id} | admin: ${p.admin}`);
     });
     const allParticipants = metadata.participants || [];
-    const participant = allParticipants.find(p => p.id === sender);
-    const isAdmin = participant?.admin === 'admin' || participant?.admin === 'superadmin';
+    // Improved admin detection
+    const participant = allParticipants.find(
+      p => p.id.split('@')[0] === sender.split('@')[0]
+    );
+    console.log('[DEBUG] Sender:', sender);
+    console.log('[DEBUG] Matched participant:', participant);
+    const isAdmin = participant && (participant.admin === 'admin' || participant.admin === 'superadmin');
     const { botJid, botLid } = getBotJids(robin, userSetting);
     const botParticipant = allParticipants.find(p => p.id === botJid || p.id === botLid);
     
