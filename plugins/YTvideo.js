@@ -1,7 +1,7 @@
 const { cmd, commands } = require("../command");
 const yts = require("yt-search");
 const { ytmp4 } = require("@vreden/youtube_scraper");
-const { sendDownloadProgress, updateDownloadProgress, simulateDownloadProgress } = require("../lib/functions");
+const { sendDownloadProgress, updateDownloadProgress, simulateDownloadProgressFixed } = require("../lib/functions");
 
 const normalizeYouTubeUrl = (inputUrl) => {
   try {
@@ -119,17 +119,17 @@ cmd(
         robin,
         from,
         mek,
-        "🔄 *Downloading video...*\n\n*10%* █"
+        "\ud83d\udd04 *Downloading video...*\n\n*20%* ██"
       );
+
+      // Simulate progress at 10%, 50%, 80%, 100% over 2.5 seconds
+      const progressPromise = simulateDownloadProgressFixed(robin, progressMsg, "video");
 
       // Download the video using only shamika-api
       let videoData;
       try {
         const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
         const apiUrl = `https://shamika-api.vercel.app/download/ytmp4/?url=${encodeURIComponent(url)}`;
-        
-        // Start simulated progress from 10% to 90%
-        const progressPromise = simulateDownloadProgress(robin, progressMsg, 10, 90, 10, "video");
         
         const apiRes = await fetch(apiUrl);
         const apiJson = await apiRes.json();
@@ -173,7 +173,7 @@ cmd(
       await updateDownloadProgress(
         robin,
         progressMsg,
-        "✅ *Download completed!*\n\n*100%* ██████████ ✅\n\n📤 *Sending video...*"
+        "✅ *Download completed!*\n\n*100%* ██████████ \n\n📤 *Sending video...*"
       );
 
       // Send video file

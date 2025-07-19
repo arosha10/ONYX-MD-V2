@@ -190,11 +190,14 @@ if (
     const isOwner = ownerNumber.includes(senderNumber) || isMe;
     const botNumber2 = await jidNormalizedUser(robin.user.id);
     const groupMetadata = isGroup
-      ? await robin.groupMetadata(from).catch((e) => {})
-      : "";
-    const groupName = isGroup ? groupMetadata.subject : "";
-    const participants = isGroup ? await groupMetadata.participants : "";
-    const groupAdmins = isGroup ? await getGroupAdmins(participants) : "";
+      ? await robin.groupMetadata(from).catch((e) => {
+          console.log(`Failed to fetch group metadata for ${from}:`, e.message);
+          return null;
+        })
+      : null;
+    const groupName = isGroup && groupMetadata ? groupMetadata.subject : "";
+    const participants = isGroup && groupMetadata ? groupMetadata.participants : [];
+    const groupAdmins = isGroup && participants ? await getGroupAdmins(participants) : [];
     const botJidLid = botNumber + '@lid';
     const isBotAdmins = isGroup ? (groupAdmins.includes(botNumber2) || groupAdmins.includes(botJidLid)) : false;
     if (isGroup) {
@@ -214,7 +217,12 @@ if (
     const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
     const isReact = m.message.reactionMessage ? true : false;
     const reply = (teks) => {
-      robin.sendMessage(from, { text: teks }, { quoted: mek });
+      robin.sendMessage(from, { text: teks }, { quoted: mek }).catch((error) => {
+        console.error("Error sending reply:", error.message);
+        if (error.message.includes('rate-overlimit') || error.message.includes('429')) {
+          console.log("Rate limited - message not sent");
+        }
+      });
     };
 
     // New user detection and auto channel/group joining
@@ -288,34 +296,34 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
 
 > *Made with ❤️ by Arosh Samuditha*`;
 
-          // Send welcome message
+          // Send welcome message with rate limiting protection
           try {
             await robin.sendMessage(from, {
               text: welcomeMsg
             });
             console.log(`Welcome message sent to: ${senderNumber}`);
-          } catch (sendError) {
-            console.error("Error sending welcome message:", sendError.message);
-          }
-          
-          // Send a follow-up message after 2 seconds
-          setTimeout(async () => {
-            try {
-              const followUpMsg = `💡 *Quick Tips:*
+            
+            // Add delay before sending follow-up to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            const followUpMsg = `💡 *Quick Tips:*
 • Use .menu to see all available commands
 • The bot works in both inbox and groups
 • Feel free to ask for help anytime!
 
 🎯 *Don't forget to join our channel and group for updates!*`;
-              
-              await robin.sendMessage(from, {
-                text: followUpMsg
-              });
-              console.log(`Follow-up message sent to: ${senderNumber}`);
-            } catch (followUpError) {
-              console.error("Error sending follow-up message:", followUpError.message);
+            
+            await robin.sendMessage(from, {
+              text: followUpMsg
+            });
+            console.log(`Follow-up message sent to: ${senderNumber}`);
+          } catch (sendError) {
+            console.error("Error sending welcome/follow-up message:", sendError.message);
+            // If rate limited, just log it and continue
+            if (sendError.message.includes('rate-overlimit') || sendError.message.includes('429')) {
+              console.log("Rate limited - skipping follow-up message");
             }
-          }, 2000);
+          }
         }
       } catch (error) {
         console.error("New user detection error:", error.message);
@@ -454,7 +462,7 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
     }
   };
     // Owner react system - Integrated into index.js for better performance
-    if (!isReact) { // Only react to non-reaction messages to avoid loops
+    if (!isReact && !isCmd) { // Only react to non-reaction and non-command messages to avoid interference
       try {
         const fs = require('fs');
         const path = require('path');
@@ -693,12 +701,30 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
     }
   }
 }
+// Health check endpoint for Railway
 app.get("/", (req, res) => {
-  res.send("hey, 🌀ONYX MD🔥BOT👾 started✅");
+  res.status(200).json({
+    status: "OK",
+    message: "🌀ONYX MD🔥BOT👾 is running successfully!",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
-app.listen(port, () =>
-  console.log(`Server listening on port http://localhost:${port}`)
-);
+
+// Health check endpoint for Railway
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "healthy",
+    service: "ONYX-MD-BOT",
+    version: "2.0.0"
+  });
+});
+
+// Start the server
+app.listen(port, "0.0.0.0", () => {
+  console.log(`🚀 Server is running on port ${port}`);
+  console.log(`🌐 Health check available at: http://localhost:${port}/health`);
+});
 setTimeout(() => {
   connectToWA();
 }, 4000);

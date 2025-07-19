@@ -1,6 +1,6 @@
 const { cmd } = require("../command");
 const axios = require("axios");
-const { getBuffer } = require("../lib/functions");
+const { getBuffer, sendDownloadProgress, updateDownloadProgress, simulateDownloadProgress, simulateDownloadProgressCustom } = require("../lib/functions");
 
 cmd(
   {
@@ -34,8 +34,6 @@ cmd(
       if (!instaRegex.test(q)) {
         return reply("*Invalid Instagram URL! Please provide a valid Instagram post, reel, or video URL.* 📸");
       }
-
-      reply("*Downloading your Instagram video...* 📸");
 
       // Use Shamika API
       const shamikaApiUrl = `https://shamika-api.vercel.app/download/insta?url=${encodeURIComponent(q)}`;
@@ -130,6 +128,16 @@ cmd(
 
       // Log the final video URL
       console.log("[INSTAGRAM] Final video URL:", videoUrl);
+
+      // Wait for progress simulation to complete
+      await simulateDownloadProgressCustom(robin, null, [100], 0, "Instagram video");
+
+      // Update progress to 100% and send completion message
+      await updateDownloadProgress(
+        robin,
+        null,
+        "✅ *Download completed!*\n\n*100%* ██████████ ✅\n\n📤 *Sending Instagram video...*"
+      );
 
       // Download the video to a buffer
       let videoBuffer = null;

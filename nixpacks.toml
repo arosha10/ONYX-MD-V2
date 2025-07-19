@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ["nodejs_20", "python3", "build-essential", "pkg-config", "cairo-dev", "jpeg-dev", "pango-dev", "musl-dev", "giflib-dev", "pixman-dev", "pangomm-dev", "libjpeg-turbo-dev", "freetype-dev", "ffmpeg"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm start"
+
+[variables]
+NODE_ENV = "production" 

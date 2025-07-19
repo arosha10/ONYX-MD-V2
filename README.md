@@ -33,11 +33,25 @@
 **[LUNES HOST 👾](https://betadash.lunes.host/login)**
 
 
-*Run Comands*
+## 🚀 Quick Start
 
-  **npm install**
-  
-  **npm start**
+### Local Development
+```bash
+npm install
+npm start
+```
+
+### 🚂 Railway Deployment
+This bot is now configured for Railway deployment! 
+
+**Quick Deploy:**
+1. Fork this repository
+2. Go to [Railway](https://railway.app)
+3. Create new project from GitHub
+4. Add environment variables (see `env.example`)
+5. Deploy!
+
+**For detailed Railway deployment guide, see [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md)**
 
 
 ***සෑ.යු - Lunes Host platform එකෙන් ඔයා Bot ව Deploy කරනවනම් Movie API එක දාන්න එපා (මේ platform එකෙන් deploy කරාම Movie download කරන්න බෑ )***
@@ -45,8 +59,15 @@
 ---
 
 
-### DEPLOY FROM WORKFLOW :
+## 🚀 Deployment Options
 
+### 🚂 Railway (Recommended)
+- **Easy deployment** with automatic scaling
+- **24/7 uptime** with health checks
+- **Free tier available**
+- See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for detailed guide
+
+### 🌊 GitHub Actions
 COPY WORKFLOW CODE 🌀🔥
 
 ```
@@ -59,14 +80,10 @@ on:
   pull_request:
     branches:
       - main
-  schedule:
-    # Run every 6 hours and 15 minutes (6.25 hours = 22500 seconds)
-    # Cron format: minute hour day month day-of-week
-    # This runs at 00:00, 06:15, 12:30, 18:45 UTC every day
-    - cron: '0,15,30,45 0,6,12,18 * * *'
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
 
     strategy:
@@ -87,34 +104,6 @@ jobs:
 
     - name: Start application
       run: npm start
-
-  restart:
-    runs-on: ubuntu-latest
-    needs: build
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 20.x
-
-    - name: Install dependencies
-      run: npm install
-
-    - name: Restart application
-      run: |
-        echo "🔄 Restarting application..."
-        npm restart || npm start
-        echo "✅ Application restarted successfully"
-
-    - name: Wait for restart
-      run: |
-        echo "⏳ Waiting for application to fully restart..."
-        sleep 30
-        echo "✅ Restart process completed" 
 
 ```
 

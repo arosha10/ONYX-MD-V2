@@ -1,5 +1,6 @@
 const { cmd, commands } = require("../command");
 const { getFbVideoInfo } = require("fb-downloader-scrapper");
+const { sendDownloadProgress, updateDownloadProgress, simulateDownloadProgress, simulateDownloadProgressCustom } = require("../lib/functions");
 
 cmd(
   {
@@ -40,16 +41,14 @@ cmd(
     }
   ) => {
     try {
-      if (!q) return reply("*Please provide a valid Facebook video URL!* 🌚❤️");
+      if (!q) return reply("*Please provide a valid Facebook video URL!*");
 
       // Validate the Facebook URL format
       const fbRegex = /(https?:\/\/)?(www\.)?(facebook|fb)\.com\/.+/;
       if (!fbRegex.test(q))
-        return reply("*Invalid Facebook URL! Please check and try again.* 🌚");
+        return reply("*Invalid Facebook URL! Please check and try again.*");
 
       // Fetch video details
-      reply("*Downloading your video...* 🌚❤️");
-
       const result = await getFbVideoInfo(q);
 
       if (!result || (!result.sd && !result.hd)) {
@@ -58,25 +57,6 @@ cmd(
 
       const { title, sd, hd } = result;
 
-      // Prepare and send the message with video details
-      let desc = `
-*🌀ONYX MD🔥FB VIDEO DOWNLOADER🌀*
-
-📄 *Title*: ${title || "Unknown"}
-📽 *Quality*: ${hd ? "HD Available" : "SD Only"}
-
-> *Made By Arosh Samuditha*
-        `;
-      await robin.sendMessage(
-        from,
-        {
-          image: {
-            url: "https://raw.githubusercontent.com/aroshsamuditha/ONYX-MEDIA/refs/heads/main/oNYX%20bOT.jpg",
-          },
-          caption: desc,
-        },
-        { quoted: mek }
-      );
       // Send the video if available
       if (hd) {
         await robin.sendMessage(

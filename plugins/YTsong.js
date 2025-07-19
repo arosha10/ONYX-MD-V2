@@ -1,7 +1,7 @@
 const { cmd, commands } = require("../command");
 const yts = require("yt-search");
 const { ytmp3 } = require("@vreden/youtube_scraper");
-const { sendDownloadProgress, updateDownloadProgress, simulateDownloadProgress } = require("../lib/functions");
+const { sendDownloadProgress, updateDownloadProgress, simulateDownloadProgressFixed } = require("../lib/functions");
 
 
 const normalizeYouTubeUrl = (inputUrl) => {
@@ -131,17 +131,17 @@ cmd(
         robin,
         from,
         mek,
-        "🔄 *Downloading song...*\n\n*10%* █"
+        "\ud83d\udd04 *Downloading song...*\n\n*20%* ██"
       );
+
+      // Simulate progress at 10%, 50%, 80%, 100% over 2.5 seconds
+      const progressPromise = simulateDownloadProgressFixed(robin, progressMsg, "song");
 
       // Download MP3 audio using only shamika-api
       let songData;
       try {
         const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
         const apiUrl = `https://shamika-api.vercel.app/download/ytmp3/?url=${encodeURIComponent(url)}`;
-        
-        // Start simulated progress from 10% to 90%
-        const progressPromise = simulateDownloadProgress(robin, progressMsg, 10, 90, 10, "song");
         
         const apiRes = await fetch(apiUrl);
         const apiJson = await apiRes.json();
@@ -195,7 +195,7 @@ cmd(
       await updateDownloadProgress(
         robin,
         progressMsg,
-        "✅ *Download completed!*\n\n*100%* ██████████ ✅\n\n📤 *Sending song...*"
+        "✅ *Download completed!*\n\n*100%* ██████████ \n\n📤 *Sending song...*"
       );
 
       // Send audio as voice message with fallback

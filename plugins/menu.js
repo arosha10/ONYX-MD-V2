@@ -112,6 +112,7 @@ cmd(
     ▫️.toimg <reply sticker>
     ▫️.tr <lang><text>
     ▫️.tts <text>
+    ▫️.logo
 *|🔍SEARCH COMMANDS🔍|*
     ▫️.yts <text>
     ▫️.lc
@@ -121,6 +122,12 @@ cmd(
     ▫️.ai <text>
     ▫️.chatgpt <text>
     ▫️.gemini <text>
+    ▫️.imagine <promt>
+    ▫️.imggen <promt>
+    ▫️.generate <promt>
+*|✴OTHER COMMANDS✴|*
+    ▫️.viewonce
+    ▫️.vv
 
 > *🌀ONYX MD🔥BOT👾*
 `;
