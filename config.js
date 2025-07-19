@@ -17,7 +17,7 @@ module.exports = {
   AUTO_STICKER: process.env.AUTO_STICKER || "true",
   AUTO_REPLY: process.env.AUTO_REPLY || "true",
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || "AIzaSyDLgcxiDy9AvgG-4A-dWfoEbntE3Oo7X8c",
-  MOVIE_API_KEY: process.env.MOVIE_API_KEY || "sky|1e06f8c7ba61f1b89ec740052ac303c0d4d6d447", //https://api.skymansion.site/movies-dl/
+  MOVIE_API_KEY: process.env.MOVIE_API_KEY || "sky|803af4468dcc6f28f0afa305fb12c18eb6fafc58", //https://api.skymansion.site/movies-dl/
 
   //-------------------------------------------------------------------------------------------------------------------------------------
   UNSPLASH_API_KEY: process.env.UNSPLASH_API_KEY || "", // Add your Unsplash API key here for better image generation
