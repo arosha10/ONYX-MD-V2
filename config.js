@@ -5,6 +5,9 @@ if (fs.existsSync("config.env"))
 function convertToBool(text, fault = "true") {
   return text === fault ? true : false;
 }
+
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+
 module.exports = {
   SESSION_ID: process.env.SESSION_ID || "jUsWnL5K#ztAdzGXvqUga3rgFR6IiWDA29HEBZiWvhWVpqf72l-o",
   OWNER_NUM: process.env.OWNER_NUM || "94704163338",
@@ -23,4 +26,6 @@ module.exports = {
   UNSPLASH_API_KEY: process.env.UNSPLASH_API_KEY || "", // Add your Unsplash API key here for better image generation
   FLUX_API_KEY: process.env.FLUX_API_KEY || "", // Add your Flux AI API key for AI image generation
 };
+
+module.exports.GITHUB_TOKEN = GITHUB_TOKEN;
  
