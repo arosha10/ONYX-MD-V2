@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuration
-const RESTART_INTERVAL = 6 * 60 * 60 * 1000 + 15 * 60 * 1000; // 6 hours 15 minutes in milliseconds
+const RESTART_INTERVAL = 6 * 60 * 60 * 1000 + 10 * 60 * 1000; // 6 hours 10 minutes in milliseconds
 const LOG_FILE = path.join(__dirname, 'restart.log');
 
 // Function to log messages
@@ -96,4 +96,4 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
-log('✅ Restart manager is running and will restart every 6 hours 15 minutes'); 
+log('✅ Restart manager is running and will restart every 6 hours 10 minutes'); 
