@@ -13,8 +13,20 @@ const GOODBYE_STICKER = "https://github.com/aroshsamuditha/ONYX-MEDIA/raw/refs/h
 module.exports = async function (robin, groupId, leftMembers) {
   try {
     // Fetch group metadata for group name
-    let groupMetadata = await robin.groupMetadata(groupId);
+    let groupMetadata;
+    try {
+      groupMetadata = await robin.groupMetadata(groupId);
+    } catch (e) {
+      if (e.output && e.output.statusCode === 429) {
+        console.log('[GOODBYE] Rate limited! Waiting 10 seconds...');
+        await new Promise(res => setTimeout(res, 10000));
+        groupMetadata = await robin.groupMetadata(groupId);
+      } else {
+        throw e;
+      }
+    }
     let groupName = groupMetadata.subject || "this group";
+    await new Promise(res => setTimeout(res, 1000)); // Add delay after metadata fetch
 
     for (const member of leftMembers) {
       // Custom goodbye message
