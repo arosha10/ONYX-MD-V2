@@ -6,7 +6,7 @@ function convertToBool(text, fault = "true") {
   return text === fault ? true : false;
 }
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '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';
 
 module.exports = {
   SESSION_ID: process.env.SESSION_ID || "jUsWnL5K#ztAdzGXvqUga3rgFR6IiWDA29HEBZiWvhWVpqf72l-o",
