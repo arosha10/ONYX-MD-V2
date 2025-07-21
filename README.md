@@ -17,7 +17,7 @@
 
 ---
 ### GET SESSION ID:
-**[SESSION ID 🔗](https://web-production-8d2b1.up.railway.app/)**
+**[SESSION ID 🔗](https://improved-jillian-arosha01-51df8b45.koyeb.app/)**
 
 ### CREATE MEGA ACCOUNT:
 **[MEGA 📁](https://mega.io/)**
