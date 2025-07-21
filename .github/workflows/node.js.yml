@@ -1,32 +1,40 @@
-name: Deploy Bot
+name: Node.js CI
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
 
-      - name: Check GITHUB_TOKEN
-        run: echo "GITHUB_TOKEN is set"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Install dependencies (with real PAT)
+      run: npm install
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
 
-      - name: Install dependencies
-        run: npm install
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Start application
+      run: nohup npm start &
 
-      # Add your deploy step here, e.g. deploy to Koyeb, Heroku, etc.
-      # - name: Deploy to Koyeb
-      #   run: echo "Deploy step here" 
+    # Optionally, keep the workflow alive for a period (simulate bot running)
+    - name: Keep workflow alive
+      run: sleep 3600
+
+# IMPORTANT:
+# 1. Add a secret named PAT_GITHUB with your GitHub Personal Access Token (PAT) in repo Settings > Secrets and variables > Actions
+# 2. This workflow will start the bot in the background and keep the job alive for 1 hour (adjust as needed) 
