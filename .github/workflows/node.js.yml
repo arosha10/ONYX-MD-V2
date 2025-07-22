@@ -15,26 +15,36 @@ jobs:
       matrix:
         node-version: [20.x]
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Install dependencies (with real PAT)
-      run: npm install
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
+      - name: Install dependencies (with real PAT)
+        run: npm install
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
 
-    - name: Start application
-      run: nohup npm start &
+      - name: Start application
+        run: nohup npm start &
 
-    # Optionally, keep the workflow alive for a period (simulate bot running)
-    - name: Keep workflow alive
-      run: sleep 3600
+      - name: Keep workflow alive
+        run: sleep 3600
 
-# IMPORTANT:
-# 1. Add a secret named PAT_GITHUB with your GitHub Personal Access Token (PAT) in repo Settings > Secrets and variables > Actions
-# 2. This workflow will start the bot in the background and keep the job alive for 1 hour (adjust as needed) 
+  next-job:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+
+      - name: Do something after build
+        run: echo "The first job is done! Now running the next job." 
