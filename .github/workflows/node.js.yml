@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
     strategy:
       matrix:
         node-version: [20.x]
@@ -23,10 +25,11 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Clean node_modules
+        run: rm -rf node_modules
+
       - name: Install dependencies (with real PAT)
         run: npm install
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
 
       - name: Start application
         run: nohup npm start &
@@ -37,6 +40,8 @@ jobs:
   next-job:
     needs: build
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
