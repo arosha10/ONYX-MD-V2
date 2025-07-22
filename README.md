@@ -71,7 +71,11 @@ This bot is now configured for Railway deployment!
 COPY WORKFLOW CODE 🌀🔥
 
 ```
-name: Node.js CI
+name: OnyxMD.js CI
+
+concurrency:
+  group: onyx-md-v2-main
+  cancel-in-progress: true
 
 on:
   push:
@@ -80,30 +84,54 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    - cron: '0 0,6,12,18 * * *'
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    env:
+      GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
     strategy:
       matrix:
         node-version: [20.x]
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: Install dependencies
-      run: npm install
+      - name: Clean node_modules
+        run: rm -rf node_modules
 
-    - name: Start application
-      run: npm start
+      - name: Install dependencies (with real PAT)
+        run: npm install
+
+      - name: Start application
+        run: nohup npm start &
+
+      - name: Keep workflow alive
+        run: sleep 21540
+
+  next-job:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+
+      - name: Do something after build
+        run: echo "The first job is done! Now running the next job." 
 
 ```
 
