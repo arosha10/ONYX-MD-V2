@@ -183,9 +183,7 @@ cmd(
           totalSeconds = durationParts[0];
         }
 
-        if (totalSeconds > 1800) {
-          return reply("⏱ Audio limit is 30 minutes only!");
-        }
+        // Removed audio duration limit check here
       } catch (durationError) {
         console.error("Duration parsing error:", durationError);
         // Continue without duration check if parsing fails
