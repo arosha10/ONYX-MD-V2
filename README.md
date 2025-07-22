@@ -139,5 +139,5 @@ jobs:
 
 | <a href="https://wa.me/94761676948?text=*Hi,+Arosh🌀🔥*"><img src="https://raw.githubusercontent.com/aroshsamuditha/ONYX-MEDIA/refs/heads/main/IMG/IMG_3333.png22.png" width=150 height=150></a> | <a href="https://www.facebook.com/profile.php?id=61550302625124&mibextid=ZbWKwL"><img src="https://raw.githubusercontent.com/aroshsamuditha/ONYX-MEDIA/refs/heads/main/IMG/shakthi.png" width=150 height=150></a> |
 |---|---|
-| **[Arosh Samuditha](https://wa.me/94761676948?text=*Hi,+Arosh🌀🔥*)**</br>Main Developer & Owner</br>**[CREATIVE DEVIL💜🪄]** | **[Shakthi]( )**</br>Help Developer and errors fixed ||
+| **[Arosh Samuditha](https://wa.me/94761676948?text=*Hi,+Arosh🌀🔥*)**</br>Main Developer & Owner</br>**[CREATIVE DEVIL💜🪄]** | **[Shakthi]( )**</br>Helper ||
 
