@@ -12,11 +12,11 @@ cmd(
     const chatId = from || m?.key?.remoteJid || "status@broadcast";
     try {
       const { data } = await axios.get('https://arosh.vercel.app/news');
-      if (data.status && data.result && data.result.title) {
-        const newsText = `📰 *${data.result.title}*\n\n${data.result.fullDesc}\n\nවැඩි විස්තර: ${data.result.link}\n🗓️ දිනය: ${data.result.date}`;
-        if (data.result.image) {
+      if (data.title) {
+        const newsText = `📰 *${data.title}*\n\n${data.description}\n\nවැඩි විස්තර: ${data.link}\n🗓️ දිනය: ${data.date || ''}`;
+        if (data.image) {
           await robin.sendMessage(chatId, {
-            image: { url: data.result.image },
+            image: { url: data.image },
             caption: newsText
           }, { quoted: m });
         } else {
