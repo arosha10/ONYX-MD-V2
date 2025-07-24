@@ -11,11 +11,19 @@ cmd(
   async (robin, m, { from }) => {
     const chatId = from || m?.key?.remoteJid || "status@broadcast";
     try {
-      const { data } = await axios.get('https://shamika-api.vercel.app/news/gossiplankanews');
+      const { data } = await axios.get('https://arosh.vercel.app/news');
       if (data.status && data.result && data.result.title) {
-        await robin.sendMessage(chatId, {
-          text: `📰 *${data.result.title}*\n\n${data.result.fullDesc}\n\nවැඩි විස්තර: ${data.result.link}\n🗓️ දිනය: ${data.result.date}`
-        }, { quoted: m });
+        const newsText = `📰 *${data.result.title}*\n\n${data.result.fullDesc}\n\nවැඩි විස්තර: ${data.result.link}\n🗓️ දිනය: ${data.result.date}`;
+        if (data.result.image) {
+          await robin.sendMessage(chatId, {
+            image: { url: data.result.image },
+            caption: newsText
+          }, { quoted: m });
+        } else {
+          await robin.sendMessage(chatId, {
+            text: newsText
+          }, { quoted: m });
+        }
       } else {
         await robin.sendMessage(chatId, { text: 'නවතම පුවත ලබාගැනීමට නොහැකි විය.' }, { quoted: m });
       }
