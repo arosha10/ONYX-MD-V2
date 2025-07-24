@@ -13,7 +13,7 @@ cmd(
     try {
       const { data } = await axios.get('https://arosh.vercel.app/news');
       if (data.title) {
-        const newsText = `📰 *${data.title}*\n\n${data.description}`;
+        const newsText = `*NEWS UPDATE (ONYX) ✅*\n\n📰 *${data.title}*\n\n${data.description}\n\n> *BY AROSH SAMUDITHA*`;
         if (data.image) {
           await robin.sendMessage(chatId, {
             image: { url: data.image },
