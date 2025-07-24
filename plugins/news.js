@@ -13,16 +13,14 @@ cmd(
     try {
       const { data } = await axios.get('https://arosh.vercel.app/news');
       if (data.title) {
-        const newsText = `📰 *${data.title}*\n\n${data.description}\n\nවැඩි විස්තර: ${data.link}\n🗓️ දිනය: ${data.date || ''}`;
+        const newsText = `📰 *${data.title}*\n\n${data.description}`;
         if (data.image) {
           await robin.sendMessage(chatId, {
             image: { url: data.image },
             caption: newsText
           }, { quoted: m });
         } else {
-          await robin.sendMessage(chatId, {
-            text: newsText
-          }, { quoted: m });
+          await robin.sendMessage(chatId, { text: newsText }, { quoted: m });
         }
       } else {
         await robin.sendMessage(chatId, { text: 'නවතම පුවත ලබාගැනීමට නොහැකි විය.' }, { quoted: m });
