@@ -1,6 +1,66 @@
 const { cmd } = require("../command");
 const axios = require("axios");
 
+let activeGroups = {};
+let lastNewsTitles = {};
+
+async function getLatestNews() {
+  try {
+    const { data } = await axios.get('https://arosh.vercel.app/news');
+    if (data.title) {
+      return {
+        title: data.title,
+        content: data.description,
+        image: data.image,
+        date: new Date().toLocaleDateString(),
+        source: "ONYX News Service"
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching news:", error.message);
+  }
+  
+  // Fallback news if API fails
+  return {
+    title: "News Update",
+    content: "Latest news from ONYX. For real-time updates, visit official news sources.",
+    image: "https://via.placeholder.com/400x300/0066cc/ffffff?text=ONYX+News",
+    date: new Date().toLocaleDateString(),
+    source: "ONYX News Service"
+  };
+}
+
+async function checkAndPostNews(bot, groupId) {
+  const news = await getLatestNews();
+  
+  if (!lastNewsTitles[groupId]) {
+    lastNewsTitles[groupId] = [];
+  }
+
+  if (!lastNewsTitles[groupId].includes(news.title)) {
+    try {
+      const newsText = `*NEWS UPDATE (ONYX) ✅*\n\n📰 *${news.title}*\n\n${news.content}\n\n> *BY AROSH SAMUDITHA*`;
+      
+      if (news.image) {
+        await bot.sendMessage(groupId, {
+          image: { url: news.image },
+          caption: newsText
+        });
+      } else {
+        await bot.sendMessage(groupId, { text: newsText });
+      }
+
+      lastNewsTitles[groupId].push(news.title);
+      
+      if (lastNewsTitles[groupId].length > 20) {
+        lastNewsTitles[groupId].shift();
+      }
+    } catch (error) {
+      console.error("Error sending news to group:", error.message);
+    }
+  }
+}
+
 cmd(
   {
     pattern: "news",
@@ -8,27 +68,162 @@ cmd(
     category: "news",
     filename: __filename,
   },
-  async (robin, m, { from }) => {
+  async (robin, m, { from, isGroup, isChannel }) => {
     const chatId = from || m?.key?.remoteJid || "status@broadcast";
+    
+    // Fallback channel detection if isChannel is undefined
+    const isChannelDetected = isChannel !== undefined ? isChannel : (chatId.endsWith("@broadcast") || chatId.endsWith("@newsletter"));
+    
+    // Debug logging
+    console.log(`[NEWS COMMAND] Chat ID: ${chatId}, isGroup: ${isGroup}, isChannel: ${isChannel}, isChannelDetected: ${isChannelDetected}`);
+    
     try {
       const { data } = await axios.get('https://arosh.vercel.app/news');
-      if (data.status && data.result && data.result.title) {
-        const newsText = `📰 *${data.result.title}*\n\n${data.result.fullDesc}\n\nවැඩි විස්තර: ${data.result.link}\n🗓️ දිනය: ${data.result.date}`;
-        if (data.result.image) {
+      if (data.title) {
+        const newsText = `*NEWS UPDATE (ONYX) ✅*\n\n📰 *${data.title}*\n\n${data.description}\n\n> *BY AROSH SAMUDITHA*`;
+        if (data.image) {
           await robin.sendMessage(chatId, {
-            image: { url: data.result.image },
+            image: { url: data.image },
             caption: newsText
           }, { quoted: m });
         } else {
-          await robin.sendMessage(chatId, {
-            text: newsText
-          }, { quoted: m });
+          await robin.sendMessage(chatId, { text: newsText }, { quoted: m });
         }
       } else {
         await robin.sendMessage(chatId, { text: 'නවතම පුවත ලබාගැනීමට නොහැකි විය.' }, { quoted: m });
       }
     } catch (e) {
+      console.error('[NEWS COMMAND ERROR]:', e.message);
       await robin.sendMessage(chatId, { text: 'පුවත් ලබාගැනීමේදී දෝෂයක් ඇතිවිය.' }, { quoted: m });
     }
   }
 );
+
+cmd({
+  pattern: 'newson',
+  desc: "Enable 24/7 news updates in this group/channel",
+  react: '📰',
+  filename: __filename
+}, async (bot, message, args, { from, isGroup, isChannel, participants, sender, isOwner }) => {
+  // Fallback channel detection if isChannel is undefined
+  const isChannelDetected = isChannel !== undefined ? isChannel : (from.endsWith("@broadcast") || from.endsWith("@newsletter"));
+  
+  // Debug logging
+  console.log(`[NEWSON COMMAND] Chat ID: ${from}, isGroup: ${isGroup}, isChannel: ${isChannel}, isChannelDetected: ${isChannelDetected}, sender: ${sender}, isOwner: ${isOwner}`);
+  
+  // Check if it's a group or channel
+  if (isGroup || isChannelDetected) {
+    let isAdmin = false;
+    
+    if (isGroup) {
+      // For groups, check if user is admin
+      isAdmin = participants.some(p => p.id === sender && p.admin) || sender === bot.user.jid || isOwner;
+    } else if (isChannelDetected) {
+      // For channels, allow the command if the bot is an admin
+      // Since sender is the channel ID in channels, we check if bot can send messages
+      isAdmin = true; // Allow in channels by default, bot will fail if not admin
+    }
+    
+    console.log(`[NEWSON COMMAND] isAdmin: ${isAdmin}`);
+    
+    if (isAdmin) {
+      if (!activeGroups[from]) {
+        activeGroups[from] = true;
+        const type = isChannelDetected ? "channel" : "group";
+        await bot.sendMessage(from, { 
+          text: `📰 *24/7 News Service Activated!* 🎉\n\nNews updates will be posted every 30 seconds in this ${type}.\n\n*Service Features:*\n• Automatic news updates\n• Latest breaking news\n• ONYX News Service\n• By Arosh Samuditha` 
+        });
+        
+        if (!activeGroups.interval) {
+          activeGroups.interval = setInterval(async () => {
+            for (const groupId in activeGroups) {
+              if (activeGroups[groupId] && groupId !== 'interval') {
+                await checkAndPostNews(bot, groupId);
+              }
+            }
+          }, 30000); // Check every 30 seconds
+        }
+      } else {
+        await bot.sendMessage(from, { text: "📰 *24/7 News service is already activated!*" });
+      }
+    } else {
+      const type = isChannelDetected ? "channel" : "group";
+      await bot.sendMessage(from, { text: `🚫 *This command can only be used by ${type} admins or the bot owner.*` });
+    }
+  } else {
+    await bot.sendMessage(from, { text: "❌ *This command can only be used in groups or channels.*" });
+  }
+});
+
+cmd({
+  pattern: "newsoff",
+  desc: "Disable 24/7 news updates in this group/channel",
+  react: '🛑',
+  filename: __filename
+}, async (bot, message, args, { from, isGroup, isChannel, participants, sender, isOwner }) => {
+  // Fallback channel detection if isChannel is undefined
+  const isChannelDetected = isChannel !== undefined ? isChannel : (from.endsWith("@broadcast") || from.endsWith("@newsletter"));
+  
+  // Debug logging
+  console.log(`[NEWSOFF COMMAND] Chat ID: ${from}, isGroup: ${isGroup}, isChannel: ${isChannel}, isChannelDetected: ${isChannelDetected}, sender: ${sender}, isOwner: ${isOwner}`);
+  
+  // Check if it's a group or channel
+  if (isGroup || isChannelDetected) {
+    let isAdmin = false;
+    
+    if (isGroup) {
+      // For groups, check if user is admin
+      isAdmin = participants.some(p => p.id === sender && p.admin) || sender === bot.user.jid || isOwner;
+    } else if (isChannelDetected) {
+      // For channels, allow the command if the bot is an admin
+      // Since sender is the channel ID in channels, we check if bot can send messages
+      isAdmin = true; // Allow in channels by default, bot will fail if not admin
+    }
+    
+    console.log(`[NEWSOFF COMMAND] isAdmin: ${isAdmin}`);
+    
+    if (isAdmin) {
+      if (activeGroups[from]) {
+        delete activeGroups[from];
+        const type = isChannelDetected ? "channel" : "group";
+        await bot.sendMessage(from, { text: `🛑 *24/7 News service deactivated in this ${type}.*` });
+
+        if (Object.keys(activeGroups).length === 1 && activeGroups.interval) {
+          clearInterval(activeGroups.interval);
+          delete activeGroups.interval;
+        }
+      } else {
+        await bot.sendMessage(from, { text: "🛑 *24/7 News service is not active in this group/channel.*" });
+      }
+    } else {
+      const type = isChannelDetected ? "channel" : "group";
+      await bot.sendMessage(from, { text: `🚫 *This command can only be used by ${type} admins or the bot owner.*` });
+    }
+  } else {
+    await bot.sendMessage(from, { text: "❌ *This command can only be used in groups or channels.*" });
+  }
+});
+
+cmd({
+  pattern: "newscheck",
+  desc: "Check if the 24/7 news service is active in this group/channel",
+  react: '🔍',
+  filename: __filename
+}, async (bot, message, args, { from, isGroup, isChannel }) => {
+  // Fallback channel detection if isChannel is undefined
+  const isChannelDetected = isChannel !== undefined ? isChannel : (from.endsWith("@broadcast") || from.endsWith("@newsletter"));
+  
+  // Debug logging
+  console.log(`[NEWSCHECK COMMAND] Chat ID: ${from}, isGroup: ${isGroup}, isChannel: ${isChannel}, isChannelDetected: ${isChannelDetected}`);
+  
+  if (isGroup || isChannelDetected) {
+    if (activeGroups[from]) {
+      const type = isChannelDetected ? "channel" : "group";
+      await bot.sendMessage(from, { text: `📰 *The 24/7 news service is currently active in this ${type}.*` });
+    } else {
+      await bot.sendMessage(from, { text: "🛑 *The 24/7 news service is not active in this group/channel.*" });
+    }
+  } else {
+    await bot.sendMessage(from, { text: "❌ *This command can only be used in groups or channels.*" });
+  }
+});
