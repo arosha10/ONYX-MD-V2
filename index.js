@@ -40,14 +40,41 @@ const ownerNumber = config.OWNER_NUM;
 if (!fs.existsSync(__dirname + "/auth_info_baileys/creds.json")) {
   if (!config.SESSION_ID)
     return console.log("Please add your session to SESSION_ID env !!");
+  
+  console.log("Downloading session from Mega...");
   const sessdata = config.SESSION_ID;
-  const filer = File.fromURL(`https://mega.nz/file/${sessdata}`);
-  filer.download((err, data) => {
-    if (err) throw err;
-    fs.writeFile(__dirname + "/auth_info_baileys/creds.json", data, () => {
-      console.log("Session downloaded ✅");
+  
+  try {
+    const filer = File.fromURL(`https://mega.nz/file/${sessdata}`);
+    filer.download((err, data) => {
+      if (err) {
+        console.error("Failed to download session from Mega:", err.message);
+        console.log("Please check your SESSION_ID or try generating a new session.");
+        process.exit(1);
+      }
+      
+      // Ensure the directory exists
+      if (!fs.existsSync(__dirname + "/auth_info_baileys/")) {
+        fs.mkdirSync(__dirname + "/auth_info_baileys/", { recursive: true });
+      }
+      
+      fs.writeFile(__dirname + "/auth_info_baileys/creds.json", data, (writeErr) => {
+        if (writeErr) {
+          console.error("Failed to write session file:", writeErr.message);
+          process.exit(1);
+        }
+        console.log("Session downloaded ✅");
+        // Restart the connection process after session download
+        setTimeout(() => {
+          connectToWA();
+        }, 2000);
+      });
     });
-  });
+  } catch (error) {
+    console.error("Error setting up session download:", error.message);
+    console.log("Please check your SESSION_ID or try generating a new session.");
+    process.exit(1);
+  }
 }
 
 const express = require("express");
@@ -67,6 +94,12 @@ async function connectToWA() {
   console.log("Connecting 🌀ONYX MD🔥BOT👾...");
   
   try {
+    // Check if session file exists before proceeding
+    if (!fs.existsSync(__dirname + "/auth_info_baileys/creds.json")) {
+      console.log("Session file not found. Please ensure session is properly downloaded.");
+      return;
+    }
+    
     const { state, saveCreds } = await useMultiFileAuthState(
       __dirname + "/auth_info_baileys/"
     );
@@ -74,7 +107,6 @@ async function connectToWA() {
 
     const robin = makeWASocket({
       logger: P({ level: "silent" }),
-      printQRInTerminal: false,
       browser: Browsers.macOS("Firefox"),
       syncFullHistory: true,
       auth: state,
@@ -82,13 +114,34 @@ async function connectToWA() {
       connectTimeoutMs: 60000, // 60 seconds timeout
       defaultQueryTimeoutMs: 30000, // 30 seconds for queries
       retryRequestDelayMs: 2000, // 2 seconds delay between retries
+      keepAliveIntervalMs: 25000, // Keep connection alive
     });
 
-      robin.ev.on("connection.update", async (update) => {
-      const { connection, lastDisconnect } = update;
+      robin.ev.on("connection.update", (update) => {
+      const { connection, lastDisconnect, qr } = update;
+      
+      console.log("Connection status:", connection);
+      
+      // Handle QR code for new sessions
+      if (qr) {
+        console.log("\n📱 Scan this QR code with your WhatsApp:");
+        qrcode.generate(qr, { small: true });
+        console.log("\nWaiting for QR code scan...");
+      }
+      
       if (connection === "close") {
+        console.log("Connection closed. Reason:", lastDisconnect?.error?.output?.statusCode || "Unknown");
+        
+        // Handle specific error codes
+        const statusCode = lastDisconnect?.error?.output?.statusCode;
+        if (statusCode === 403) {
+          console.log("❌ Session invalidated (403). You need to generate a new session.");
+          console.log("💡 Run: npm run generate-session");
+          return; // Don't retry for 403 errors
+        }
+        
         if (
-          lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
+          lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
         ) {
           console.log("Connection closed, attempting to reconnect...");
           setTimeout(() => {
@@ -98,8 +151,14 @@ async function connectToWA() {
               connectToWA();
             } else {
               console.log("Max retry attempts reached. Please check your connection.");
+              console.log("Possible issues:");
+              console.log("1. Check your internet connection");
+              console.log("2. Verify your SESSION_ID is correct");
+              console.log("3. Try generating a new session");
             }
-          }, 5000);
+          }, 10000); // Increased delay to 10 seconds
+        } else {
+          console.log("Bot was logged out. Please scan QR code again.");
         }
       } else if (connection === "open") {
       console.log(" Installing... ");
@@ -130,33 +189,6 @@ async function connectToWA() {
         },
         caption: up1,
       });
-
-      // Auto join group functionality
-      try {
-        console.log("🔄 Attempting to join group...");
-        
-        // Join the group using the invite link
-        const inviteLink = "https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1";
-        try {
-          // Extract invite code from the link
-          const inviteCode = inviteLink.split('/').pop();
-          
-          // Try to join using the invite code
-          await robin.groupAcceptInvite(inviteCode);
-          console.log("✅ ONYX MD GROUP JOINED SUCCESSFULLY");
-        } catch (groupError) {
-          if (groupError.message.includes("already") || groupError.message.includes("member")) {
-            console.log("ℹ️ Already a member of the group");
-          } else {
-            console.log("⚠️ Group join error:", groupError.message);
-            console.log("📝 Note: Channel following is not supported in this version");
-          }
-        }
-        
-        console.log("🎉 Auto-join process completed!");
-      } catch (error) {
-        console.log("❌ Auto-join process failed:", error.message);
-      }
     }
   });
   robin.ev.on("creds.update", saveCreds);
@@ -206,20 +238,7 @@ if (
       : "";
     const args = body.trim().split(/ +/).slice(1);
     const q = args.join(" ");
-    
     const isGroup = from.endsWith("@g.us");
-    const isChannel = from.endsWith("@broadcast") || from.endsWith("@newsletter");
-    
-    // Debug logging for command parsing
-    if (isCmd) {
-      console.log(`[COMMAND PARSING DEBUG] Body: "${body}"`);
-      console.log(`[COMMAND PARSING DEBUG] Command: "${command}"`);
-      console.log(`[COMMAND PARSING DEBUG] Args:`, args);
-      console.log(`[COMMAND PARSING DEBUG] Q: "${q}"`);
-      console.log(`[CHAT TYPE DEBUG] Chat ID: ${from}, isGroup: ${isGroup}, isChannel: ${isChannel}`);
-      console.log(`[CHAT TYPE DEBUG] from.endsWith("@broadcast"): ${from.endsWith("@broadcast")}`);
-      console.log(`[CHAT TYPE DEBUG] from.endsWith("@newsletter"): ${from.endsWith("@newsletter")}`);
-    }
     const sender = mek.key.fromMe
       ? robin.user.id.split(":")[0] + "@s.whatsapp.net" || robin.user.id
       : mek.key.participant || mek.key.remoteJid;
@@ -567,7 +586,6 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
             args,
             q,
             isGroup,
-            isChannel,
             sender,
             senderNumber,
             botNumber2,
@@ -600,7 +618,6 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
           args,
           q,
           isGroup,
-          isChannel,
           sender,
           senderNumber,
           botNumber2,
@@ -627,7 +644,6 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
           args,
           q,
           isGroup,
-          isChannel,
           sender,
           senderNumber,
           botNumber2,
@@ -657,7 +673,6 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
           args,
           q,
           isGroup,
-          isChannel,
           sender,
           senderNumber,
           botNumber2,
@@ -684,7 +699,6 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
           args,
           q,
           isGroup,
-          isChannel,
           sender,
           senderNumber,
           botNumber2,
@@ -770,8 +784,14 @@ app.listen(port, "0.0.0.0", () => {
   console.log(`🚀 Server is running on port ${port}`);
   console.log(`🌐 Health check available at: http://localhost:${port}/health`);
 });
-setTimeout(() => {
-  connectToWA();
-}, 4000);
+// Only start connection if session file exists
+if (fs.existsSync(__dirname + "/auth_info_baileys/creds.json")) {
+  setTimeout(() => {
+    connectToWA();
+  }, 4000);
+} else {
+  console.log("Waiting for session download to complete...");
+  // The connection will be started after session download completes
+}
 
 module.exports = { sms, downloadMediaMessage, messageStore };
