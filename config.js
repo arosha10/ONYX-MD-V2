@@ -19,7 +19,7 @@ module.exports = {
   AUTO_VOICE: process.env.AUTO_VOICE || "true",
   AUTO_STICKER: process.env.AUTO_STICKER || "true",
   AUTO_REPLY: process.env.AUTO_REPLY || "true",
-  GEMINI_API_KEY: process.env.GEMINI_API_KEY || "AIzaSyDLgcxiDy9AvgG-4A-dWfoEbntE3Oo7X8c",
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || "AIzaSyDhksN79VZZTsjz3VglIueugHmD6yUoYRI",
   MOVIE_API_KEY: process.env.MOVIE_API_KEY || "sky|1e06f8c7ba61f1b89ec740052ac303c0d4d6d447", //https://api.skymansion.site/movies-dl/
 
   //-------------------------------------------------------------------------------------------------------------------------------------

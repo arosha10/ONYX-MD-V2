@@ -179,7 +179,20 @@ if (
       : "";
     const args = body.trim().split(/ +/).slice(1);
     const q = args.join(" ");
+    
     const isGroup = from.endsWith("@g.us");
+    const isChannel = from.endsWith("@broadcast") || from.endsWith("@newsletter");
+    
+    // Debug logging for command parsing
+    if (isCmd) {
+      console.log(`[COMMAND PARSING DEBUG] Body: "${body}"`);
+      console.log(`[COMMAND PARSING DEBUG] Command: "${command}"`);
+      console.log(`[COMMAND PARSING DEBUG] Args:`, args);
+      console.log(`[COMMAND PARSING DEBUG] Q: "${q}"`);
+      console.log(`[CHAT TYPE DEBUG] Chat ID: ${from}, isGroup: ${isGroup}, isChannel: ${isChannel}`);
+      console.log(`[CHAT TYPE DEBUG] from.endsWith("@broadcast"): ${from.endsWith("@broadcast")}`);
+      console.log(`[CHAT TYPE DEBUG] from.endsWith("@newsletter"): ${from.endsWith("@newsletter")}`);
+    }
     const sender = mek.key.fromMe
       ? robin.user.id.split(":")[0] + "@s.whatsapp.net" || robin.user.id
       : mek.key.participant || mek.key.remoteJid;
@@ -527,6 +540,7 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
             args,
             q,
             isGroup,
+            isChannel,
             sender,
             senderNumber,
             botNumber2,
@@ -559,6 +573,7 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
           args,
           q,
           isGroup,
+          isChannel,
           sender,
           senderNumber,
           botNumber2,
@@ -585,6 +600,7 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
           args,
           q,
           isGroup,
+          isChannel,
           sender,
           senderNumber,
           botNumber2,
@@ -614,6 +630,7 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
           args,
           q,
           isGroup,
+          isChannel,
           sender,
           senderNumber,
           botNumber2,
@@ -640,6 +657,7 @@ https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1?mode=r_t
           args,
           q,
           isGroup,
+          isChannel,
           sender,
           senderNumber,
           botNumber2,
