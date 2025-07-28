@@ -125,6 +125,16 @@ cmd(
     ▫️.imagine <promt>
     ▫️.imggen <promt>
     ▫️.generate <promt>
+*|📰NEWS COMMANDS📰|*
+    ▫️.news - Get latest news
+    ▫️.newson - Enable 24/7 news
+    ▫️.newsoff - Disable 24/7 news
+    ▫️.newscheck - Check news status
+    ▫️.autonewson - Auto news (persistent)
+    ▫️.autonewsoff - Disable auto news
+    ▫️.autonewslist - List auto news (Owner)
+    ▫️.getjid - Get chat JID (for config)
+    ▫️.testchannel - Test channel routing (Channel only)
 *|✴OTHER COMMANDS✴|*
     ▫️.viewonce
     ▫️.vv
