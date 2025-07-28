@@ -84,7 +84,7 @@ async function connectToWA() {
       retryRequestDelayMs: 2000, // 2 seconds delay between retries
     });
 
-      robin.ev.on("connection.update", (update) => {
+      robin.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect } = update;
       if (connection === "close") {
         if (
@@ -112,15 +112,6 @@ async function connectToWA() {
       // Initialize anti-delete plugin
       const setupAntiDelete = require("./plugins/anti-delete.js");
       setupAntiDelete(robin);
-      
-      // Initialize automatic news updates
-      try {
-        const { initializeAutoNews } = require("./plugins/news.js");
-        initializeAutoNews(robin);
-      } catch (error) {
-        console.log("Error initializing auto news:", error.message);
-      }
-      
       console.log("🌀ONYX MD🔥BOT👾 installed successful ✅");
       console.log("🌀ONYX MD🔥BOT👾 connected to whatsapp ✅");
 
@@ -139,6 +130,33 @@ async function connectToWA() {
         },
         caption: up1,
       });
+
+      // Auto join group functionality
+      try {
+        console.log("🔄 Attempting to join group...");
+        
+        // Join the group using the invite link
+        const inviteLink = "https://chat.whatsapp.com/EakzHLdzYkn8dpflSMqYr1";
+        try {
+          // Extract invite code from the link
+          const inviteCode = inviteLink.split('/').pop();
+          
+          // Try to join using the invite code
+          await robin.groupAcceptInvite(inviteCode);
+          console.log("✅ ONYX MD GROUP JOINED SUCCESSFULLY");
+        } catch (groupError) {
+          if (groupError.message.includes("already") || groupError.message.includes("member")) {
+            console.log("ℹ️ Already a member of the group");
+          } else {
+            console.log("⚠️ Group join error:", groupError.message);
+            console.log("📝 Note: Channel following is not supported in this version");
+          }
+        }
+        
+        console.log("🎉 Auto-join process completed!");
+      } catch (error) {
+        console.log("❌ Auto-join process failed:", error.message);
+      }
     }
   });
   robin.ev.on("creds.update", saveCreds);
@@ -189,21 +207,19 @@ if (
     const args = body.trim().split(/ +/).slice(1);
     const q = args.join(" ");
     
+    const isGroup = from.endsWith("@g.us");
+    const isChannel = from.endsWith("@broadcast") || from.endsWith("@newsletter");
+    
     // Debug logging for command parsing
     if (isCmd) {
       console.log(`[COMMAND PARSING DEBUG] Body: "${body}"`);
       console.log(`[COMMAND PARSING DEBUG] Command: "${command}"`);
       console.log(`[COMMAND PARSING DEBUG] Args:`, args);
       console.log(`[COMMAND PARSING DEBUG] Q: "${q}"`);
+      console.log(`[CHAT TYPE DEBUG] Chat ID: ${from}, isGroup: ${isGroup}, isChannel: ${isChannel}`);
+      console.log(`[CHAT TYPE DEBUG] from.endsWith("@broadcast"): ${from.endsWith("@broadcast")}`);
+      console.log(`[CHAT TYPE DEBUG] from.endsWith("@newsletter"): ${from.endsWith("@newsletter")}`);
     }
-    const isGroup = from.endsWith("@g.us");
-    const isChannel = from.endsWith("@broadcast") || from.endsWith("@newsletter") || from.includes("@newsletter");
-    
-    // Debug logging for chat type detection
-    console.log(`[CHAT TYPE DEBUG] From: ${from}`);
-    console.log(`[CHAT TYPE DEBUG] isGroup: ${isGroup}`);
-    console.log(`[CHAT TYPE DEBUG] isChannel: ${isChannel}`);
-    
     const sender = mek.key.fromMe
       ? robin.user.id.split(":")[0] + "@s.whatsapp.net" || robin.user.id
       : mek.key.participant || mek.key.remoteJid;
