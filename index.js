@@ -112,6 +112,15 @@ async function connectToWA() {
       // Initialize anti-delete plugin
       const setupAntiDelete = require("./plugins/anti-delete.js");
       setupAntiDelete(robin);
+      
+      // Initialize automatic news updates
+      try {
+        const { initializeAutoNews } = require("./plugins/news.js");
+        initializeAutoNews(robin);
+      } catch (error) {
+        console.log("Error initializing auto news:", error.message);
+      }
+      
       console.log("🌀ONYX MD🔥BOT👾 installed successful ✅");
       console.log("🌀ONYX MD🔥BOT👾 connected to whatsapp ✅");
 
@@ -180,19 +189,21 @@ if (
     const args = body.trim().split(/ +/).slice(1);
     const q = args.join(" ");
     
-    const isGroup = from.endsWith("@g.us");
-    const isChannel = from.endsWith("@broadcast") || from.endsWith("@newsletter");
-    
     // Debug logging for command parsing
     if (isCmd) {
       console.log(`[COMMAND PARSING DEBUG] Body: "${body}"`);
       console.log(`[COMMAND PARSING DEBUG] Command: "${command}"`);
       console.log(`[COMMAND PARSING DEBUG] Args:`, args);
       console.log(`[COMMAND PARSING DEBUG] Q: "${q}"`);
-      console.log(`[CHAT TYPE DEBUG] Chat ID: ${from}, isGroup: ${isGroup}, isChannel: ${isChannel}`);
-      console.log(`[CHAT TYPE DEBUG] from.endsWith("@broadcast"): ${from.endsWith("@broadcast")}`);
-      console.log(`[CHAT TYPE DEBUG] from.endsWith("@newsletter"): ${from.endsWith("@newsletter")}`);
     }
+    const isGroup = from.endsWith("@g.us");
+    const isChannel = from.endsWith("@broadcast") || from.endsWith("@newsletter") || from.includes("@newsletter");
+    
+    // Debug logging for chat type detection
+    console.log(`[CHAT TYPE DEBUG] From: ${from}`);
+    console.log(`[CHAT TYPE DEBUG] isGroup: ${isGroup}`);
+    console.log(`[CHAT TYPE DEBUG] isChannel: ${isChannel}`);
+    
     const sender = mek.key.fromMe
       ? robin.user.id.split(":")[0] + "@s.whatsapp.net" || robin.user.id
       : mek.key.participant || mek.key.remoteJid;

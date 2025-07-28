@@ -1,0 +1,11 @@
+{
+  "enabled": false,
+  "groups": [],
+  "interval": 30000,
+  "lastUpdate": null,
+  "settings": {
+    "autoStart": false,
+    "preventDuplicates": true,
+    "maxNewsPerUpdate": 5
+  }
+} 
