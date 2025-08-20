@@ -5,7 +5,7 @@ function convertToBool(text, fault = "true") {
 }
 
 // GitHub token should be stored as an environment variable, not in code
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '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';
 
 module.exports = {
   SESSION_ID: "qF0SRDbZ#9tx5giKmJV6dnVvg68--kYhkqS6cKsSS-lQCXEEOWvk",
